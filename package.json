@@ -16,7 +16,7 @@
   "description": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/devforth/adminforth-clerk-oauth-adapter.git"
+    "url": "https://github.com/devforth/adminforth-oauth-adapter-clerk.git"
   },
   "dependencies": {
     "jwt-decode": "^4.0.0"
