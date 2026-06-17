@@ -1,0 +1,26 @@
+{
+  "name": "@adminforth/clerk-oauth-adapter",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && npm version patch",
+    "rollout": "npm run build && npm publish --access public"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devforth/adminforth-clerk-oauth-adapter.git"
+  },
+  "dependencies": {
+    "jwt-decode": "^4.0.0",
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": {
+    "adminforth": "^2.35.0"
+  }
+}
