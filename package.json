@@ -22,7 +22,7 @@
     "jwt-decode": "^4.0.0"
   },
   "peerDependencies": {
-    "adminforth": "^2.35.0"
+    "adminforth": "^3.2.4"
   },
   "release": {
     "plugins": [
