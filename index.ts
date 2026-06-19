@@ -1,11 +1,22 @@
-import type { OAuth2Adapter } from "adminforth";
-import { jwtDecode } from "jwt-decode";
+import type { OAuth2Adapter, OAuth2UserInfo } from "adminforth";
+import { createRemoteJWKSet, jwtVerify } from "jose";
+
+type ClerkIdTokenClaims = {
+  sub?: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+};
+
+const HAS_PROTOCOL_RE = /^https?:\/\//;
+const CLERK_ID_TOKEN_ALGORITHMS = ["RS256"];
 
 export default class AdminForthAdapterClerkOauth2 implements OAuth2Adapter {
     private clientID: string;
     private clientSecret: string;
     private domain: string;
     private useOpenIdConnect: boolean;
+    private clerkJWKS: ReturnType<typeof createRemoteJWKSet>;
 
     constructor(options: {
       clientID: string;
@@ -18,11 +29,12 @@ export default class AdminForthAdapterClerkOauth2 implements OAuth2Adapter {
       this.clientSecret = options.clientSecret;
       // normalize: ensure protocol, strip trailing slash
       let domain = options.domain.trim().replace(/\/+$/, '');
-      if (!/^https?:\/\//.test(domain)) {
+      if (!HAS_PROTOCOL_RE.test(domain)) {
         domain = `https://${domain}`;
       }
       this.domain = domain;
       this.useOpenIdConnect = options.useOpenIdConnect ?? true;
+      this.clerkJWKS = createRemoteJWKSet(new URL(`${this.domain}/.well-known/jwks.json`));
     }
 
     getAuthUrl(): string {
@@ -35,7 +47,7 @@ export default class AdminForthAdapterClerkOauth2 implements OAuth2Adapter {
       return `${this.domain}/oauth/authorize?${params.toString()}`;
     }
 
-    async getTokenFromCode(code: string, redirect_uri: string): Promise<{ email: string, fullName?: string; profilePictureUrl?: string }> {
+    async getTokenFromCode(code: string, redirect_uri: string): Promise<OAuth2UserInfo> {
       const tokenResponse = await fetch(`${this.domain}/oauth/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -56,16 +68,23 @@ export default class AdminForthAdapterClerkOauth2 implements OAuth2Adapter {
       }
       if (this.useOpenIdConnect && tokenData.id_token) {
         try {
-          const decodedToken: any = jwtDecode(tokenData.id_token);
-          if (decodedToken.email) {
-            return {
-              email: decodedToken.email,
-              fullName: decodedToken.name,
-              profilePictureUrl: decodedToken.picture
-            };
-          }
+          const { payload } = await jwtVerify(tokenData.id_token, this.clerkJWKS, {
+            issuer: this.domain,
+            audience: this.clientID,
+            algorithms: CLERK_ID_TOKEN_ALGORITHMS,
+          });
+          const claims = payload as ClerkIdTokenClaims;
+
+          return {
+            provider: this.constructor.name,
+            subject: claims.sub,
+            email: claims.email,
+            fullName: claims.name,
+            profilePictureUrl: claims.picture,
+          };
         } catch (error) {
-          console.error("Error decoding token:", error);
+          console.error("Error verifying token:", error);
+          throw error;
         }
       }
 
@@ -80,6 +99,8 @@ export default class AdminForthAdapterClerkOauth2 implements OAuth2Adapter {
       }
 
       return {
+        provider: this.constructor.name,
+        subject: userData.sub,
         email: userData.email,
         fullName: userData.name,
         profilePictureUrl: userData.picture
