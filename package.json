@@ -18,6 +18,7 @@
     "type": "git",
     "url": "https://github.com/devforth/adminforth-oauth-adapter-clerk.git"
   },
+  "homepage": "https://adminforth.dev/docs/tutorial/Adapters/oauth2-adapters/#clerk-oauth-adapter",
   "dependencies": {
     "jose": "^6.2.3"
   },
