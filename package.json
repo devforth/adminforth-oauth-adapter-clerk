@@ -23,7 +23,7 @@
     "jose": "^6.2.3"
   },
   "peerDependencies": {
-    "adminforth": "^3.2.4"
+    "adminforth": "^4.7.3"
   },
   "release": {
     "plugins": [
